@@ -1,30 +1,62 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect } from "react"
+import { useDispatch, useSelector } from "react-redux"
+import { add } from "../store/cartSlice"
+import { Items } from "./Items"
+import { fetchProducts, STATUSES } from "../store/productSlice"
 
 export default function Products() {
+  const items = useSelector((state) => state.cart)
+  const { data: products, status } = useSelector((state) => state.product)
 
-    const [products, setProducts] = useState([])
+  const dispatch = useDispatch()
 
-    useEffect(() => {
-        const fetchProducts = async () => {
-            const res = await fetch('https://fakestoreapi.com/products');
-            const data = await res.json();
-            console.log(data);
-            setProducts(data)
-        }
+  useEffect(() => {
+    dispatch(fetchProducts())
+  }, [])
 
-        fetchProducts()
-    }, [])
+  if (status === STATUSES.LOADING) {
+    return <h2>LOADING......</h2>
+  }
 
-  return <div className="productsWrapper">
-        {
-            products.map(product => 
-                <div className="card" key={product.id}>
-                    <img src={product.image} alt="" />
-                    <h4>{product.title}</h4>
-                    <h5>{product.price}</h5>
-                    <button className="btn">Add to cart</button>
-                </div>
-            )
-        }        
-    </div>
+  if (status === STATUSES.ERROR) {
+    return <h2>SOMETHING WENT WRONG....</h2>
+  }
+
+  return (
+    <>
+      <h2>Status : {status}</h2>
+      <div className="productsWrapper">
+        {products.map((product) => {
+          return (
+            <div className="card" key={product.id}>
+              <img src={product.image} alt="" />
+              <h4>{product.title}</h4>
+              <h5>{product.price}</h5>
+              <button
+                className="btn"
+                onClick={() =>
+                  dispatch(
+                    add({
+                      id: product.id,
+                      title: product.title,
+                      price: product.price,
+                      qty: 1,
+                    })
+                  )
+                }
+              >
+                Add to cart
+              </button>
+            </div>
+          )
+        })}
+      </div>
+      <hr />
+      <div style={{ display: "flex" }}>
+        {items.map((item) => (
+          <Items item={item} />
+        ))}
+      </div>
+    </>
+  )
 }
